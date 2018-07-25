@@ -1,9 +1,14 @@
 package project4;
 
 import javax.swing.*;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 
+import java.awt.Component;
 import java.io.*;
 import java.util.*;
 
@@ -14,102 +19,134 @@ import java.util.*;
  * @version July 15, 2018
  ********************************************************************/
 public class RentalStore extends AbstractTableModel {
-	
-	/** holds the DVDs that are checked out*/
+
+	/** holds the DVDs that are checked out */
 	public static MyDoubleLinkedList<DVD> listDVDs;
-	public  MyDoubleLinkedList<UndoAction> undoList;
-	
-	
+
+	/** This is a compononent of the Serializable class */
+	private static final long serialVersionUID = 1L;
+
+	/** holds the undo actions */
+	public MyDoubleLinkedList<UndoAction> undoList;
+
+	/** holds the column names */
 	public String[] columnNames;
-	 JTable table;
-	 DefaultTableModel tableModel;
+
+	/** holds the table */
+	public JTable table;
+
+	/** holds the table model */
+	public DefaultTableModel tableModel;
 
 	/*****************************************************************
-	 * Constructor creates instantiates the arraylist of DVDs
+	 * Constructor creates instantiates the linked list of DVDs 
+	 * and undo actions. It also makes the column names and the table
 	 * 
 	 * @param none
-	 * @return none
 	 ****************************************************************/
 	public RentalStore() {
 		super();
-		listDVDs = new  MyDoubleLinkedList<>();
+		// list of dvds
+		listDVDs = new MyDoubleLinkedList<>();
+		// list of undo actions
 		undoList = new MyDoubleLinkedList<UndoAction>();
-		
-		columnNames = new String[]{"First Name",
-	            "Title",
-	            "Rented on",
-	            "Due Back"
-	            ,"Player Type"};
-		
-		tableModel=new DefaultTableModel(columnNames,5);
-		
+
+		columnNames = new String[] 
+				{ "First Name", "Title", 
+						"Rented on", "Due Back", "Player Type" };
+
+		tableModel = new DefaultTableModel(columnNames, 5);
+
 		table = new JTable(0, 5);
 	}
 
-		@Override
-	    public int getColumnCount() {
-	        return columnNames.length;
-	    }
+	/*****************************************************************
+	 * This method finds the number of columns
+	 * 
+	 * @param none
+	 * @return number of columns
+	 ****************************************************************/
+	public int getColumnCount() {
+		return columnNames.length;
+	}
 
-	    @Override
-	    public String getColumnName(int column) {
-	        return columnNames[column];
-	    }
+	/*****************************************************************
+	 * This method finds the name of the columns
+	 * 
+	 * @param number of column
+	 * @return name of column
+	 ****************************************************************/
+	public String getColumnName(int column) {
+		return columnNames[column];
+	}
 
-	    @Override
-	    public int getRowCount() {
-	        return listDVDs.size();
-	    }
+	/*****************************************************************
+	 * This method finds the number of rows
+	 * 
+	 * @param none
+	 * @return number of rows
+	 ****************************************************************/
+	public int getRowCount() {
+		return listDVDs.size();
+	}
 
-	    @Override
-	    public Object getValueAt(int rowIndex, int columnIndex) {
-	       DVD a = listDVDs.get(rowIndex);
-	       
-	        if (a == null) {
-	            return null;
-	        }
-	        
-	        switch (columnIndex) {
-	            case 0:
-	                return a.getNameOfRenter();
-	            case 1:
-	                return a.getTitle();
-	            case 2:
-	                return a.getBoughtString();
-	            case 3:
-	                return a.getDueBack();
-	            case 4:
-	                if(a instanceof Game) {
-	                return ((Game)a).getGamePlayerType();
-	                }
-	                else {
-	                	return null;
-	                }
-	    
-	            default:
-	                return null;
-	        }
-	    }
+	/*****************************************************************
+	 * This method finds the information in a particular row and 
+	 * column
+	 * 
+	 * @param number of row and column index
+	 * @return information in that row and column
+	 ****************************************************************/
+	public Object getValueAt(int rowIndex, int columnIndex) {
+		DVD a = listDVDs.get(rowIndex);
 
-	
+		if (a == null) {
+			return null;
+		}
+
+		switch (columnIndex) {
+		case 0:
+			// first row and column
+			return a.getNameOfRenter();
+		case 1:
+			// second row and column
+			return a.getTitle();
+		case 2:
+			// third row and column
+			return a.getBoughtString();
+		case 3:
+			// fourth row and column
+			return a.getDueBack();
+		case 4:
+			// fifth row and column
+			if (a instanceof Game) {
+				return ((Game) a).getGamePlayerType();
+			} else {
+				return null;
+			}
+
+		default:
+			return null;
+		}
+	}
 
 	/*****************************************************************
 	 * Adds a DVD to the arraylist
 	 * 
-	 * @param DVD a DVD with DVD information
+	 * @param DVD
+	 *            a DVD with DVD information
 	 * @return none
 	 ****************************************************************/
-	public void add (DVD a) {
-		
-		//adds the dvd to the arraylist
+	public void add(DVD a) {
+
+		// adds the dvd to the arraylist
 		listDVDs.add(a);
-		
-		//continuously updates the arraylist
-		//fireIntervalAdded(this, 0, listDVDs.size());
-		fireTableRowsInserted(getRowCount()-1, getRowCount()-1);
-		
+
+		// continuously updates the arraylist
+		// fireIntervalAdded(this, 0, listDVDs.size());
+		fireTableRowsInserted(getRowCount() - 1, getRowCount() - 1);
+
 		undoList.add(new UndoAction("add", a));
-		System.out.println("after adding to the list " + undoList.size());
 
 	}
 
@@ -119,16 +156,15 @@ public class RentalStore extends AbstractTableModel {
 	 * @param a DVD with DVD information
 	 * @return none
 	 ****************************************************************/
-	public void delete (DVD a) {
-		//sorts through the list of DVDs and deletes the correct DVD
-		for(int i = 0; i < listDVDs.size(); i++) {
-			if(a ==  listDVDs.get(i)) {
+	public void delete(DVD a) {
+		// sorts through the list of DVDs and deletes the correct DVD
+		for (int i = 0; i < listDVDs.size(); i++) {
+			if (a == listDVDs.get(i)) {
 				listDVDs.remove(i);
 				fireTableRowsDeleted(i, i);
-				
+
 				undoList.add(new UndoAction("remove", a));
 
-				System.out.println("after returning an item " + undoList.size());
 			}
 		}
 	}
@@ -139,34 +175,8 @@ public class RentalStore extends AbstractTableModel {
 	 * @param i integer to get from the arraylist
 	 * @return DVD at the selected index
 	 ****************************************************************/
-	public DVD get (int i) {
+	public DVD get(int i) {
 		return listDVDs.get(i);
-	}
-
-	/*****************************************************************
-	 * This method gathers the information for a DVD into a string
-	 * to print out
-	 * 
-	 * @param arg0 item that was selected
-	 * @return line the string with the information 
-	 ****************************************************************/
-	public static Object getElementAt(int arg0) {	
-
-		//creates a local DVD unit 
-		DVD unit = listDVDs.get(arg0);
-
-		//uses the unit to get the information for a string
-		String line = "Name: " + " " + listDVDs.get(arg0).getNameOfRenter();
-		line += "    Title: " + " " + listDVDs.get(arg0).getTitle();	
-		line += "    Rented On: " + " " + listDVDs.get(arg0).getBoughtString();
-		line += "    Due Back On: " + " " + listDVDs.get(arg0).getDueBack();
-
-		//gets the gamesystem of games
-		if (unit instanceof Game) {
-			line += "    Console: " + ((Game)unit).getGamePlayerType();
-		}
-
-		return line;
 	}
 
 	/*****************************************************************
@@ -182,215 +192,269 @@ public class RentalStore extends AbstractTableModel {
 	/*****************************************************************
 	 * This method saves the list of DVDs
 	 * 
-	 * @param filename name of file
+	 * @param filename
+	 *            name of file
 	 * @return none
 	 ****************************************************************/
 	public void saveAsSerializable(String filename) {
-		
-		//attempts to save the linkedList
+
+		// attempts to save the file
 		try {
 			FileOutputStream fos = new FileOutputStream(filename);
 			ObjectOutputStream os = new ObjectOutputStream(fos);
 			os.writeObject(listDVDs);
 			os.close();
-			
-//			  ObjectIOExample objectIO = new ObjectIOExample();
-//
-////			  for(int i = 0; i < listDVDs.size(); i++) {
-////		        DVD d = new DVD();
-////		       // d = listDVDs.get(i);
-//		        objectIO.WriteObjectToFile(filename, listDVDs);
-//			  }
-//
-//		        DVD dvd = (DVD) objectIO.ReadObjectFromFile(filename);
-		        
 		}
-		
-		//displays error message if the file does not work
-		catch (Exception ex) {
-			JOptionPane.showMessageDialog(null,"Error in saving db");
+
+		// displays error message if saving does not work
+		catch (IOException ex) {
+			JOptionPane.showMessageDialog(null, 
+					"Error in saving db");
+			ex.printStackTrace();
+
 		}
 	}
-	
-	
-//    public void WriteObjectToFile(String filepath,Object serObj) {
-//    	
-//        try {
-//            FileOutputStream fileOut = new FileOutputStream(filepath);
-//
-//            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
-//
-//            objectOut.writeObject(serObj);
-//
-//            objectOut.close();
-//            System.out.println("The Object  was succesfully written to a file");
-//        	
-//        } catch (Exception ex) {
-//
-//            ex.printStackTrace();
-//
-//        }
-//
-//    }
 
 	/*****************************************************************
 	 * This method loads the list of DVDs from a saved file
 	 * 
-	 * @param filename name of file
+	 * @param filename
+	 *            name of file
 	 * @return none
 	 ****************************************************************/
 	public void loadFromSerializable(String filename) {
-		
-//		//attempts to read the file and display it
-//		try {
-////			FileInputStream fis = new FileInputStream(filename);
-////			ObjectInputStream is = new ObjectInputStream(fis);
-////
-////			listDVDs = (MyDoubleLinkedList<DVD>) is.readObject();
-////			fireTableDataChanged();
-////			is.close();
-//			
-//		}
-//		
-//		//displays error message if loading does not work 
-//		catch (Exception ex) {
-//			JOptionPane.showMessageDialog(null,"Error in loading db");
-//		}
-		
-		
-		 try {
 
-	            FileInputStream fileIn = new FileInputStream(filename);
-	            ObjectInputStream objectIn = new ObjectInputStream(fileIn);
-	
-	            listDVDs = (MyDoubleLinkedList<DVD>) objectIn.readObject();
-	            undoList = new MyDoubleLinkedList<UndoAction>();
-	            objectIn.close();
-	            
+		// attempts to read the file and display it
+		try {
+			FileInputStream fis = new FileInputStream(filename);
+			ObjectInputStream is = new ObjectInputStream(fis);
 
-	
-	        } catch (Exception ex) {
-	
-	          ex.printStackTrace();
-	
-	            //return null;
-	
-	        }
+			listDVDs = (MyDoubleLinkedList<DVD>) is.readObject();
+			fireTableDataChanged();
+			is.close();
+		}
+
+		// displays error message if loading does not work
+		catch (Exception ex) {
+			JOptionPane.showMessageDialog(null, 
+					"Error in loading db");
+		}
 	}
-	
+
 	/*****************************************************************
-	 * This method saves the list of DVDs
+	 * This method saves the list of DVDs in a text file
 	 * 
 	 * @param filename name of file
 	 * @return none
 	 ****************************************************************/
 	public void saveAsTextFile(String filename) {
 		try {
-	//	PrintWriter writer = new PrintWriter(filename);
-			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filename));
+			PrintWriter writer = new PrintWriter(filename);
+			ObjectOutputStream out = 
+					new ObjectOutputStream
+					(new FileOutputStream(filename));
 
-		//iterate over list 
-		for(int i = 0; i < listDVDs.size(); i++) {
-		    out.writeObject(listDVDs.get(i));
+			// iterate over list
+			for (int i = 0; i < listDVDs.size(); i++) {
+
+				DVD d = listDVDs.get(i);
+
+				String dateBoughtOn = d.getBoughtString();
+				
+				String dateDueOn = d.getDueBack();
+
+				if (d instanceof Game) {
+					String player;
+					PlayerType type = 
+							((Game) d).getGamePlayerType();
+
+					if (type == PlayerType.PS4) {
+						player = "PS4";
+					} else if (type == PlayerType.Xbox360) {
+						player = "XBOX360";
+					} else {
+						player = "XBOX720";
+					}
+
+					writer.println(d.getNameOfRenter() + "!!!" + 
+					d.getTitle() + "!!!" + 
+							dateBoughtOn + "!!!" + dateDueOn
+							+ "!!!" + player);
+				} else {
+					writer.println(
+							d.getNameOfRenter() 
+							+ "!!!" + d.getTitle() + 
+							"!!!" + dateBoughtOn + "!!!" + dateDueOn);
+				}
+			}
+			// writer.println();
+			out.close();
+			writer.close();
 		}
-		
-		out.close();
+
+		catch (Exception e) {
+			JOptionPane.
+			showMessageDialog(null, "Error in saving db");
+			e.printStackTrace();
 		}
-		
-		catch(Exception e) {
-			System.out.println("Error saving into db");
-		}
+
 	}
-	
+
+	/*****************************************************************
+	 * This method adds elements back into the list of dvds
+	 * 
+	 * @param dvd info
+	 * @return none
+	 ****************************************************************/
 	public void addFromUndo(DVD a) {
 
 		// adds the dvd to the arraylist
 		listDVDs.add(a);
-	
-		  // continuously updates the arraylist
-		fireTableRowsInserted(getRowCount()-1, getRowCount()-1);
+
+		// continuously updates the arraylist
+		fireTableRowsInserted(getRowCount() - 1, getRowCount() - 1);
 	}
 
+	/*****************************************************************
+	 * This method removes elements from the list of dvds
+	 * 
+	 * @param dvd info
+	 * @return none
+	 ****************************************************************/
 	public void deleteFromUndo(DVD a) {
 		for (int i = 0; i < listDVDs.size(); i++) {
 			if (a == listDVDs.get(i)) {
 				listDVDs.remove(i);
-				fireTableRowsDeleted(i, i);	
+				fireTableRowsDeleted(i, i);
 			}
 		}
 	}
-	
-public void undoAdd() {
-		
-		if(undoList.size() <= 0) {
+
+	/*****************************************************************
+	 * This method undoes adding an item in the list of items
+	 * 
+	 * @param dvd info
+	 * @return none
+	 ****************************************************************/
+	public void undoAdd() {
+
+		if (undoList.size() <= 0) {
 			throw new NullPointerException();
 		}
-		
-		else {
-		UndoAction lastAction = undoList.get(undoList.size() - 1);
-		
-		if (lastAction.getAction() == "add") {
-			deleteFromUndo(lastAction.getDvd());
-			undoList.remove(undoList.size()-1);
-			System.out.println("after removing from undo list " + undoList.size());
-		}
 
-		else if (lastAction.getAction() == "remove") {
-			addFromUndo(lastAction.getDvd());
-			undoList.remove(undoList.size()-1);
-			System.out.println("after adding from undo list " + undoList.size());
+		else {
+			UndoAction lastAction = undoList.get(undoList.size() - 1);
+
+			if (lastAction.getAction() == "add") {
+				deleteFromUndo(lastAction.getDvd());
+				undoList.remove(undoList.size() - 1);
+			}
+
+			else if (lastAction.getAction() == "remove") {
+				addFromUndo(lastAction.getDvd());
+				undoList.remove(undoList.size() - 1);
 			}
 		}
 	}
 
-	
 	/*****************************************************************
-	 * This method loads the list of DVDs from a saved file
+	 * This method loads the list of DVDs from a saved text file
 	 * 
 	 * @param filename name of file
 	 * @return none
 	 ****************************************************************/
-	public void loadFromTextFile(String filename) {
-		
-		//attempts to read the file and display it
+	public void loadFromTextFile(String filename) 
+			throws ParseException {
+		Scanner fileReader;
+
+		JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Load");
+		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		chooser.setCurrentDirectory(new 
+				File(System.getProperty("user.home")));
+
 		try {
-			
-			  BufferedReader br = null;
-		      br = new BufferedReader(new FileReader(filename));
-		            
-			ArrayList<String>list =new ArrayList<String> ();
-			String currentLine;
-			
-			while ((currentLine = br.readLine()) != null) {
-			    list.add(currentLine);
-			    System.out.println(currentLine);
-			} 
-			
-			MyDoubleLinkedList<DVD> listDVDs = new MyDoubleLinkedList<DVD>();
-			
-			for(int i = 0; i < list.size(); i++) {
-				//listDVDs.add(list.get(i));
-				
+			fileReader = new Scanner(new File(filename));
+
+			while (fileReader.hasNext()) {
+				String[] loaded = fileReader.next().split("!!!");
+				SimpleDateFormat df = 
+						new SimpleDateFormat("MM/dd/yyyy");
+
+				String dateBought = loaded[2];
+                String dueDate = loaded[3];
+
+				Date boughtDateDateForm = 
+						new SimpleDateFormat("MM/dd/yyyy")
+						.parse(dateBought);
+				// This checks for invalid dates
+				df.parse(dateBought);
+
+				// this takes the date form and turns it into a
+				// gregorian calendar form
+				GregorianCalendar gregorianCalendar = 
+						(GregorianCalendar) 
+						GregorianCalendar.getInstance();
+				gregorianCalendar.setTime(boughtDateDateForm);
+
+				Date dueDateDateForm = 
+						new SimpleDateFormat
+						("MM/dd/yyyy").parse(dueDate);
+
+				df.parse(dueDate);
+
+				GregorianCalendar gregorianCalendar1 = 
+						(GregorianCalendar) 
+						GregorianCalendar.getInstance();
+				gregorianCalendar1.setTime(dueDateDateForm);
+
+				if (loaded.length == 9) {
+					Game d = new Game();
+
+					PlayerType type;
+
+					if (loaded[8].equals("PS4")) {
+						type = PlayerType.PS4;
+					} else if (loaded[8].equals("XBOX360")) {
+						type = PlayerType.Xbox360;
+					} else {
+						type = PlayerType.XBox1;
+					}
+
+					((Game) d).setPlayerType(type);
+					d.setNameOfRenter(loaded[0]);
+					d.setTitle(loaded[1]);
+
+					d.setBought(new GregorianCalendar());
+					d.setDueBack(new GregorianCalendar());
+					add(d);
+				} else {
+					DVD d = new DVD();
+					d.setNameOfRenter(loaded[0]);
+					d.setTitle(loaded[1]);
+
+					d.setBought(new GregorianCalendar());
+					d.setDueBack(new GregorianCalendar());
+					add(d);
+				}
 			}
-			
-			br.close() ;
-			
-		}
-		
-		//displays error message if loading does not work 
-		catch (Exception ex) {
-			JOptionPane.showMessageDialog(null,"Error in loading db");
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 		}
 	}
 
+	/*****************************************************************
+	 * This method sets the table header
+	 * 
+	 * @param none
+	 * @return headings of the columns
+	 ****************************************************************/
 	public Object getTableHeader() {
-		// TODO Auto-generated method stub
-		columnNames = new String[]{"First Name",
-	            "Title",
-	            "Rented on",
-	            "Due Back"
-	            ,"Player Type"};
+		columnNames = new String[] { 
+				"First Name", "Title", "Rented on", 
+				"Due Back", "Player Type" };
 		return columnNames;
 	}
+
 }
 
